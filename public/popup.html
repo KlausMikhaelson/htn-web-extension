@@ -9,85 +9,93 @@
       width: 500px;
       max-height: 600px;
       margin: 0;
-      padding: 20px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000000;
+      color: #ffffff;
       overflow-y: auto;
     }
     
     .container {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
+      background: #0a0a0a;
       padding: 20px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      min-height: 100vh;
     }
     
     h1 {
       margin: 0 0 20px 0;
-      font-size: 24px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 500;
+      color: #ffffff;
+      letter-spacing: -0.3px;
     }
     
     .info-card {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      background: #111111;
+      border-radius: 4px;
+      padding: 14px;
+      margin-bottom: 12px;
+      border: 1px solid #1a1a1a;
     }
     
     .label {
-      font-size: 12px;
+      font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      opacity: 0.8;
-      margin-bottom: 8px;
+      letter-spacing: 0.5px;
+      color: #666666;
+      margin-bottom: 6px;
+      font-weight: 500;
     }
     
     .value {
-      font-size: 16px;
-      font-weight: 500;
+      font-size: 14px;
+      font-weight: 400;
       word-break: break-all;
+      color: #ffffff;
     }
     
     .status {
       display: inline-block;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: rgba(255, 255, 255, 0.2);
-      font-size: 12px;
-      margin-top: 8px;
+      padding: 3px 8px;
+      border-radius: 3px;
+      background: #1a1a1a;
+      font-size: 10px;
+      margin-top: 6px;
+      color: #888888;
+      border: 1px solid #222222;
     }
     
     .status.active {
-      background: rgba(76, 175, 80, 0.3);
+      background: #ffffff;
+      color: #000000;
+      border-color: #ffffff;
     }
     
     .loading {
       text-align: center;
       padding: 20px;
-      opacity: 0.7;
+      color: #666666;
+      font-size: 13px;
     }
     
     /* Tab card styles */
     .tab-card {
-      background: rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
+      background: #111111;
+      border-radius: 4px;
       padding: 12px;
-      margin-bottom: 10px;
-      border: 2px solid transparent;
-      transition: all 0.2s ease;
+      margin-bottom: 8px;
+      border: 1px solid #1a1a1a;
+      transition: all 0.15s ease;
     }
     
     .tab-card:hover {
-      background: rgba(255, 255, 255, 0.18);
-      border-color: rgba(255, 255, 255, 0.3);
+      background: #151515;
+      border-color: #222222;
     }
     
     .tab-card.active-tab {
-      border-color: rgba(76, 175, 80, 0.5);
-      background: rgba(76, 175, 80, 0.15);
+      border-color: #ffffff;
+      background: #0f0f0f;
     }
     
     .tab-header {
@@ -98,27 +106,30 @@
     }
     
     .tab-icon {
-      font-size: 18px;
+      font-size: 16px;
     }
     
     .tab-hostname {
-      font-weight: 600;
-      font-size: 14px;
+      font-weight: 500;
+      font-size: 13px;
       flex: 1;
+      color: #ffffff;
     }
     
     .active-badge {
-      background: rgba(76, 175, 80, 0.3);
-      padding: 2px 8px;
-      border-radius: 12px;
-      font-size: 10px;
+      background: #ffffff;
+      color: #000000;
+      padding: 2px 6px;
+      border-radius: 2px;
+      font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      font-weight: 600;
     }
     
     .tab-title {
-      font-size: 13px;
-      opacity: 0.9;
+      font-size: 12px;
+      color: #888888;
       margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
@@ -126,8 +137,8 @@
     }
     
     .tab-url {
-      font-size: 11px;
-      opacity: 0.7;
+      font-size: 10px;
+      color: #555555;
       word-break: break-all;
       margin-bottom: 8px;
       max-height: 32px;
@@ -139,8 +150,8 @@
     }
     
     .tab-stats {
-      font-size: 10px;
-      opacity: 0.6;
+      font-size: 9px;
+      color: #444444;
       display: flex;
       gap: 6px;
       align-items: center;

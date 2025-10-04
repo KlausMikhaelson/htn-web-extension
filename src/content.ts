@@ -72,63 +72,61 @@ function showWarningOverlay(buttonElement: HTMLElement): void {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.95);
+    background: #000000;
     z-index: 999999;
     display: flex;
     align-items: center;
     justify-content: center;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.2s ease;
   `;
 
   // Create warning content
   const content = document.createElement('div');
   content.style.cssText = `
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 40px;
-    border-radius: 20px;
+    background: #0a0a0a;
+    padding: 50px 60px;
+    border-radius: 4px;
     max-width: 500px;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: slideIn 0.4s ease;
+    border: 1px solid #1a1a1a;
+    animation: slideIn 0.3s ease;
   `;
 
   content.innerHTML = `
-    <div style="font-size: 80px; margin-bottom: 20px;">💰</div>
-    <h1 style="color: white; font-size: 32px; margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-      Hold Up! 🛑
+    <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; letter-spacing: -0.5px;">
+      You need to save money
     </h1>
-    <p style="color: white; font-size: 20px; margin: 0 0 30px 0; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-      You need to <strong>save money</strong>, bro!<br>
-      Don't buy this right now. 💸
+    <p style="color: #888888; font-size: 16px; margin: 0 0 40px 0; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400;">
+      Don't buy this right now
     </p>
-    <div style="display: flex; gap: 15px; justify-content: center;">
+    <div style="display: flex; gap: 12px; justify-content: center;">
       <button id="money-tracker-cancel" style="
-        background: rgba(255, 255, 255, 0.2);
-        color: white;
-        border: 2px solid white;
-        padding: 15px 30px;
-        font-size: 16px;
-        border-radius: 10px;
+        background: #ffffff;
+        color: #000000;
+        border: none;
+        padding: 12px 24px;
+        font-size: 14px;
+        border-radius: 4px;
         cursor: pointer;
-        font-weight: 600;
-        transition: all 0.2s;
+        font-weight: 500;
+        transition: all 0.15s;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
-        ✅ You're Right, I'll Save
+        I'll Save
       </button>
       <button id="money-tracker-proceed" style="
-        background: rgba(255, 59, 48, 0.8);
-        color: white;
-        border: 2px solid rgba(255, 59, 48, 1);
-        padding: 15px 30px;
-        font-size: 16px;
-        border-radius: 10px;
+        background: transparent;
+        color: #666666;
+        border: 1px solid #333333;
+        padding: 12px 24px;
+        font-size: 14px;
+        border-radius: 4px;
         cursor: pointer;
-        font-weight: 600;
-        transition: all 0.2s;
+        font-weight: 500;
+        transition: all 0.15s;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
-        ❌ I Still Want to Buy
+        Proceed Anyway
       </button>
     </div>
   `;
@@ -144,16 +142,16 @@ function showWarningOverlay(buttonElement: HTMLElement): void {
       to { opacity: 1; }
     }
     @keyframes slideIn {
-      from { transform: translateY(-50px); opacity: 0; }
+      from { transform: translateY(-10px); opacity: 0; }
       to { transform: translateY(0); opacity: 1; }
     }
     #money-tracker-cancel:hover {
-      background: rgba(255, 255, 255, 0.3) !important;
-      transform: scale(1.05);
+      background: #e6e6e6 !important;
     }
     #money-tracker-proceed:hover {
-      background: rgba(255, 59, 48, 1) !important;
-      transform: scale(1.05);
+      background: #1a1a1a !important;
+      color: #888888 !important;
+      border-color: #444444 !important;
     }
   `;
   document.head.appendChild(style);
