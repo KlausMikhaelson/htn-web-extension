@@ -17,32 +17,43 @@ const CHECKOUT_KEYWORDS = [
   'proceed to checkout',
   'checkout',
   'buy now',
-  'buy',
-  'purchase',
+  'purchase now',
   'place order',
   'complete order',
   'complete purchase',
   'pay now',
   'confirm order',
   'confirm purchase',
-  'add to cart and checkout',
   'proceed to payment',
   'continue to checkout',
-  'add to bag',
-  'add to basket',
   'order now',
-  'shop now',
-  'get it now',
-  'subscribe',
-  'start free trial',
   'continue to payment',
-  'go to checkout'
+  'go to checkout',
+  'place your order',
+  'submit order'
 ];
 
 // Function to check if text matches checkout keywords
 function isCheckoutButton(text: string): boolean {
   const lowerText = text.toLowerCase().trim();
-  return CHECKOUT_KEYWORDS.some(keyword => lowerText.includes(keyword));
+  
+  // Must be a reasonable button text length (not entire page content)
+  if (lowerText.length > 100) {
+    return false;
+  }
+  
+  // Check if the text matches our keywords
+  // Use exact match or word boundary matching to avoid false positives
+  return CHECKOUT_KEYWORDS.some(keyword => {
+    // Exact match
+    if (lowerText === keyword) {
+      return true;
+    }
+    
+    // Check if keyword appears as a complete phrase (with word boundaries)
+    const regex = new RegExp(`\\b${keyword.replace(/\s+/g, '\\s+')}\\b`, 'i');
+    return regex.test(lowerText);
+  });
 }
 
 // Function to create and show warning overlay
@@ -277,22 +288,31 @@ document.addEventListener('click', (e) => {
   
   // Check if the clicked element or any parent is a checkout button
   let element: HTMLElement | null = target;
-  let foundCheckoutButton = false;
   
   // Walk up the DOM tree to find if we clicked on or inside a checkout button
+  // But only check clickable elements (buttons, links, etc.)
   while (element && element !== document.body) {
-    const text = element.textContent || element.getAttribute('value') || element.getAttribute('aria-label') || '';
+    const tagName = element.tagName;
     
-    if (isCheckoutButton(text)) {
-      foundCheckoutButton = true;
-      console.log('🚫 Global interceptor caught checkout button click!');
+    // Only check actual clickable elements
+    if (tagName === 'BUTTON' || tagName === 'A' || 
+        element.getAttribute('role') === 'button' ||
+        (tagName === 'INPUT' && (element as HTMLInputElement).type === 'button') ||
+        (tagName === 'INPUT' && (element as HTMLInputElement).type === 'submit')) {
       
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
+      // Get the text from this specific element only
+      const text = element.textContent || element.getAttribute('value') || element.getAttribute('aria-label') || '';
       
-      showWarningOverlay(element);
-      return false;
+      if (isCheckoutButton(text)) {
+        console.log('🚫 Global interceptor caught checkout button click!', text.trim());
+        
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        showWarningOverlay(element);
+        return false;
+      }
     }
     
     element = element.parentElement;
@@ -305,13 +325,22 @@ document.addEventListener('mousedown', (e) => {
   let element: HTMLElement | null = target;
   
   while (element && element !== document.body) {
-    const text = element.textContent || element.getAttribute('value') || element.getAttribute('aria-label') || '';
+    const tagName = element.tagName;
     
-    if (isCheckoutButton(text)) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      return false;
+    // Only check actual clickable elements
+    if (tagName === 'BUTTON' || tagName === 'A' || 
+        element.getAttribute('role') === 'button' ||
+        (tagName === 'INPUT' && (element as HTMLInputElement).type === 'button') ||
+        (tagName === 'INPUT' && (element as HTMLInputElement).type === 'submit')) {
+      
+      const text = element.textContent || element.getAttribute('value') || element.getAttribute('aria-label') || '';
+      
+      if (isCheckoutButton(text)) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        return false;
+      }
     }
     
     element = element.parentElement;
