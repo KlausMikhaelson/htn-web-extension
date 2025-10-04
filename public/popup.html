@@ -6,13 +6,14 @@
   <title>Money Tracker</title>
   <style>
     body {
-      width: 400px;
-      min-height: 300px;
+      width: 500px;
+      max-height: 600px;
       margin: 0;
       padding: 20px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
+      overflow-y: auto;
     }
     
     .container {
@@ -67,6 +68,82 @@
       text-align: center;
       padding: 20px;
       opacity: 0.7;
+    }
+    
+    /* Tab card styles */
+    .tab-card {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 10px;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+    }
+    
+    .tab-card:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .tab-card.active-tab {
+      border-color: rgba(76, 175, 80, 0.5);
+      background: rgba(76, 175, 80, 0.15);
+    }
+    
+    .tab-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    
+    .tab-icon {
+      font-size: 18px;
+    }
+    
+    .tab-hostname {
+      font-weight: 600;
+      font-size: 14px;
+      flex: 1;
+    }
+    
+    .active-badge {
+      background: rgba(76, 175, 80, 0.3);
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .tab-title {
+      font-size: 13px;
+      opacity: 0.9;
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .tab-url {
+      font-size: 11px;
+      opacity: 0.7;
+      word-break: break-all;
+      margin-bottom: 8px;
+      max-height: 32px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+    
+    .tab-stats {
+      font-size: 10px;
+      opacity: 0.6;
+      display: flex;
+      gap: 6px;
+      align-items: center;
     }
   </style>
 </head>

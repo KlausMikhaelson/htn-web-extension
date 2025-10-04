@@ -8,23 +8,49 @@ interface WebsiteVisit {
   tabId: number;
 }
 
+interface TabInfo {
+  tabId: number;
+  url: string;
+  hostname: string;
+  title: string;
+  timestamp: number;
+  isActive: boolean;
+}
+
 interface StoredData {
   currentWebsite: WebsiteVisit | null;
   visitHistory: WebsiteVisit[];
+  activeTabs: TabInfo[];
 }
 
 // Listen for tab activation (when user switches tabs)
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   console.log('Tab activated:', activeInfo.tabId);
   await updateCurrentWebsite(activeInfo.tabId);
+  await updateAllTabs();
 });
 
 // Listen for tab updates (when URL changes or page loads)
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete' && tab.active) {
+  if (changeInfo.status === 'complete') {
     console.log('Tab updated:', tabId, tab.url);
-    await updateCurrentWebsite(tabId);
+    if (tab.active) {
+      await updateCurrentWebsite(tabId);
+    }
+    await updateAllTabs();
   }
+});
+
+// Listen for tab removal
+chrome.tabs.onRemoved.addListener(async (tabId) => {
+  console.log('Tab removed:', tabId);
+  await updateAllTabs();
+});
+
+// Listen for tab creation
+chrome.tabs.onCreated.addListener(async (tab) => {
+  console.log('Tab created:', tab.id);
+  await updateAllTabs();
 });
 
 // Listen for window focus changes
@@ -88,6 +114,44 @@ async function updateCurrentWebsite(tabId: number): Promise<void> {
   }
 }
 
+// Function to update all tabs information
+async function updateAllTabs(): Promise<void> {
+  try {
+    const allTabs = await chrome.tabs.query({});
+    const activeTabs: TabInfo[] = [];
+
+    for (const tab of allTabs) {
+      if (!tab.id || !tab.url) continue;
+      
+      // Skip chrome internal pages
+      if (tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) {
+        continue;
+      }
+
+      try {
+        const url = new URL(tab.url);
+        const tabInfo: TabInfo = {
+          tabId: tab.id,
+          url: tab.url,
+          hostname: url.hostname,
+          title: tab.title || 'Unknown',
+          timestamp: Date.now(),
+          isActive: tab.active || false
+        };
+        activeTabs.push(tabInfo);
+      } catch (error) {
+        console.log('Error parsing tab URL:', tab.url);
+      }
+    }
+
+    // Store all active tabs
+    await chrome.storage.local.set({ activeTabs });
+    console.log('Updated all tabs:', activeTabs.length, 'tabs');
+  } catch (error) {
+    console.error('Error updating all tabs:', error);
+  }
+}
+
 // Listen for messages from popup or content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_CURRENT_WEBSITE') {
@@ -103,6 +167,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  
+  if (message.type === 'GET_ALL_TABS') {
+    chrome.storage.local.get(['activeTabs']).then((result) => {
+      sendResponse(result.activeTabs || []);
+    });
+    return true;
+  }
 });
 
 // Initialize on extension install/update
@@ -114,6 +185,9 @@ chrome.runtime.onInstalled.addListener(async () => {
   if (activeTab?.id) {
     await updateCurrentWebsite(activeTab.id);
   }
+  
+  // Update all tabs
+  await updateAllTabs();
 });
 
 console.log('Background service worker initialized');

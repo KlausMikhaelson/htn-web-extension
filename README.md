@@ -4,10 +4,12 @@ A TypeScript-based browser extension that tracks which websites you visit, desig
 
 ## Features
 
+- **🛑 Checkout Interception**: Automatically blocks checkout/buy buttons and shows a warning to save money
+- **All Tabs Tracking**: Displays all open tabs in real-time with active tab highlighting
 - **Real-time Website Detection**: Automatically detects and tracks the current website you're on
 - **Visit History**: Keeps track of your browsing history (last 100 visits)
 - **Website Categorization**: Identifies shopping sites, financial sites, and subscription services
-- **Beautiful UI**: Modern popup interface showing current website information
+- **Beautiful UI**: Modern popup interface showing all tabs with visit statistics
 - **TypeScript**: Fully typed codebase for better development experience
 
 ## Project Structure
@@ -75,16 +77,28 @@ You can use any image editor or online tool to create these. For now, you can us
 
 1. Click the extension icon in your browser toolbar
 2. The popup will show:
-   - Current website hostname
-   - Page title
-   - Full URL
-   - Number of visits to this site
-   - Last detection timestamp
+   - Total number of open tabs
+   - List of all open tabs with:
+     - Website icon (based on category)
+     - Hostname
+     - Page title
+     - Full URL
+     - Tab ID
+     - Number of visits to each site
+   - Active tab is highlighted with a green border
 
 3. The extension automatically tracks:
+   - All open tabs in real-time
+   - Tab creation and removal
    - Tab switches
    - URL changes
    - Window focus changes
+
+4. **Checkout Protection**:
+   - When you click any button with text like "Buy Now", "Checkout", "Purchase", etc.
+   - A full-screen warning appears: "Hold Up! 🛑 You need to save money, bro!"
+   - Choose to save money (cancels the action) or proceed anyway (continues to checkout)
+   - Works on all websites including Amazon, eBay, and other shopping sites
 
 ## Development
 

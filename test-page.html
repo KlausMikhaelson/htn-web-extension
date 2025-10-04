@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page - Money Tracker Extension</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .button-group {
+            margin: 20px 0;
+        }
+        button, a.button {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            color: white;
+        }
+        .buy-button {
+            background: #ff6b6b;
+        }
+        .checkout-button {
+            background: #4ecdc4;
+        }
+        .purchase-button {
+            background: #95e1d3;
+        }
+        .normal-button {
+            background: #aaa;
+        }
+        button:hover, a.button:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Money Tracker Extension Test Page</h1>
+        <p>Click any of the buttons below to test the checkout interception feature:</p>
+        
+        <div class="button-group">
+            <h3>Test Buttons:</h3>
+            <button class="buy-button" onclick="alert('This should be blocked!')">Buy Now</button>
+            <button class="checkout-button" onclick="alert('This should be blocked!')">Proceed to Checkout</button>
+            <button class="purchase-button" onclick="alert('This should be blocked!')">Purchase</button>
+            <button class="checkout-button" onclick="alert('This should be blocked!')">Complete Order</button>
+        </div>
+        
+        <div class="button-group">
+            <h3>Test Links:</h3>
+            <a href="https://example.com" class="button buy-button">Buy Now (Link)</a>
+            <a href="https://example.com" class="button checkout-button">Checkout (Link)</a>
+        </div>
+        
+        <div class="button-group">
+            <h3>Normal Buttons (Should NOT be blocked):</h3>
+            <button class="normal-button" onclick="alert('This should work normally')">Add to Cart</button>
+            <button class="normal-button" onclick="alert('This should work normally')">View Details</button>
+            <button class="normal-button" onclick="alert('This should work normally')">Save for Later</button>
+        </div>
+        
+        <div style="margin-top: 40px; padding: 20px; background: #fff3cd; border-radius: 5px;">
+            <h3>📝 Instructions:</h3>
+            <ol>
+                <li>Make sure the Money Tracker extension is installed and enabled</li>
+                <li>Open the browser console (F12) to see debug messages</li>
+                <li>Click any "Buy Now", "Checkout", or "Purchase" button</li>
+                <li>You should see the warning overlay appear</li>
+                <li>Normal buttons should work without interception</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>
