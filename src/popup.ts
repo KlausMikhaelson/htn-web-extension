@@ -135,6 +135,16 @@ function displayAuthRequired(): void {
         lastSync: Date.now()
       });
 
+      // Initialize goals for the user
+      try {
+        const { initializeGoals } = await import('./api');
+        await initializeGoals();
+        console.log('✅ Goals initialized for user');
+      } catch (error) {
+        console.error('Failed to initialize goals:', error);
+        // Non-critical, continue anyway
+      }
+
       // Refresh the popup
       displayAllTabs();
       
@@ -291,6 +301,9 @@ async function displayAllTabs(): Promise<void> {
     });
 
     contentDiv.innerHTML += html;
+    
+    // Display pending purchases if any
+    await displayPendingPurchases();
   } catch (error) {
     console.error('Error displaying tabs:', error);
     contentDiv.innerHTML = `
@@ -299,6 +312,82 @@ async function displayAllTabs(): Promise<void> {
         <div class="value">Could not load tab information</div>
       </div>
     `;
+  }
+}
+
+// Function to display pending purchases
+async function displayPendingPurchases(): Promise<void> {
+  const contentDiv = document.getElementById('content');
+  if (!contentDiv) return;
+
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_PENDING_PURCHASES' });
+    const pendingPurchases = response || [];
+
+    if (pendingPurchases.length === 0) {
+      return; // No pending purchases to display
+    }
+
+    let html = `
+      <div class="info-card" style="margin-top: 16px; background: #1a1a0a; border-color: #2a2a1a;">
+        <div class="label" style="color: #ffaa00;">⚠️ Pending Purchases</div>
+        <div class="value" style="margin-bottom: 12px; font-size: 12px; color: #888888;">
+          ${pendingPurchases.length} purchase${pendingPurchases.length !== 1 ? 's' : ''} detected
+        </div>
+    `;
+
+    pendingPurchases.forEach((purchase: any) => {
+      const date = new Date(purchase.timestamp);
+      html += `
+        <div style="
+          background: #0a0a0a;
+          padding: 8px;
+          border-radius: 4px;
+          margin-bottom: 8px;
+          border: 1px solid #1a1a1a;
+        ">
+          <div style="font-size: 11px; color: #666666; margin-bottom: 4px;">
+            ${date.toLocaleString()}
+          </div>
+          <div style="font-size: 12px; color: #ffffff; margin-bottom: 2px;">
+            ${purchase.website}
+          </div>
+          <div style="font-size: 10px; color: #888888; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+            ${purchase.url}
+          </div>
+        </div>
+      `;
+    });
+
+    html += `
+        <button id="clear-purchases-btn" style="
+          background: transparent;
+          color: #666666;
+          border: 1px solid #333333;
+          padding: 8px 16px;
+          font-size: 11px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-weight: 500;
+          width: 100%;
+          margin-top: 8px;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        ">
+          Clear All
+        </button>
+      </div>
+    `;
+
+    contentDiv.innerHTML += html;
+
+    // Add clear button handler
+    const clearBtn = document.getElementById('clear-purchases-btn');
+    clearBtn?.addEventListener('click', async () => {
+      await chrome.runtime.sendMessage({ type: 'CLEAR_PENDING_PURCHASES' });
+      displayAllTabs(); // Refresh the view
+    });
+  } catch (error) {
+    console.error('Error displaying pending purchases:', error);
   }
 }
 

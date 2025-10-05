@@ -1,4 +1,5 @@
 // Background service worker for tracking website visits
+import { addPurchase } from './api';
 
 interface WebsiteVisit {
   url: string;
@@ -37,6 +38,60 @@ interface UserData {
 async function isUserAuthenticated(): Promise<boolean> {
   const result = await chrome.storage.local.get(['isAuthenticated']);
   return result.isAuthenticated === true;
+}
+
+// Function to sync purchase to API
+async function syncPurchaseToAPI(purchaseData: any): Promise<void> {
+  try {
+    // Check if user is authenticated
+    const authenticated = await isUserAuthenticated();
+    if (!authenticated) {
+      console.log('User not authenticated, skipping API sync');
+      return;
+    }
+
+    console.log('🔄 Syncing purchase to API:', purchaseData);
+
+    // Prepare API payload
+    const apiPayload: any = {
+      item_name: purchaseData.item_name || `Purchase from ${purchaseData.website}`,
+      price: purchaseData.price || 0,
+      website: purchaseData.website,
+      url: purchaseData.url,
+      purchase_date: new Date(purchaseData.timestamp).toISOString(),
+      metadata: {
+        detected_by: 'extension',
+        purchase_id: purchaseData.id
+      }
+    };
+
+    // Add optional fields if present
+    if (purchaseData.currency) {
+      apiPayload.currency = purchaseData.currency;
+    }
+    if (purchaseData.description) {
+      apiPayload.description = purchaseData.description;
+    }
+
+    console.log('📤 API Payload:', apiPayload);
+
+    // Send to API
+    const result = await addPurchase(apiPayload);
+
+    console.log('✅ Purchase synced to API:', result);
+
+    // Update purchase status to synced
+    const pending = await chrome.storage.local.get(['pendingPurchases']);
+    const updated = (pending.pendingPurchases || []).map((p: any) =>
+      p.id === purchaseData.id ? { ...p, status: 'synced', apiId: result.purchase?.id } : p
+    );
+    await chrome.storage.local.set({ pendingPurchases: updated });
+
+  } catch (error) {
+    console.error('❌ Failed to sync purchase to API:', error);
+    console.error('Error details:', error);
+    // Keep as pending so it can be retried later
+  }
 }
 
 // Listen for tab activation (when user switches tabs)
@@ -215,6 +270,45 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SIGN_OUT') {
     chrome.storage.local.remove(['user', 'isAuthenticated', 'lastSync']).then(() => {
       console.log('User signed out');
+      sendResponse({ success: true });
+    });
+    return true;
+  }
+  
+  if (message.type === 'PURCHASE_DETECTED') {
+    console.log('💸 Purchase detected:', message.data);
+    
+    const purchaseEvent = {
+      ...message.data,
+      id: Date.now().toString(),
+      status: 'pending'
+    };
+    
+    // Store purchase event locally
+    chrome.storage.local.get(['pendingPurchases']).then(async (result) => {
+      const pendingPurchases = result.pendingPurchases || [];
+      pendingPurchases.push(purchaseEvent);
+      
+      await chrome.storage.local.set({ pendingPurchases });
+      console.log('Purchase event stored locally');
+      
+      // Sync to API automatically
+      syncPurchaseToAPI(purchaseEvent);
+    });
+    
+    sendResponse({ success: true });
+    return true;
+  }
+  
+  if (message.type === 'GET_PENDING_PURCHASES') {
+    chrome.storage.local.get(['pendingPurchases']).then((result) => {
+      sendResponse(result.pendingPurchases || []);
+    });
+    return true;
+  }
+  
+  if (message.type === 'CLEAR_PENDING_PURCHASES') {
+    chrome.storage.local.set({ pendingPurchases: [] }).then(() => {
       sendResponse({ success: true });
     });
     return true;
