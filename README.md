@@ -4,6 +4,8 @@ A TypeScript-based browser extension that tracks which websites you visit, desig
 
 ## Features
 
+- **🔐 Clerk Authentication**: Secure user authentication with Clerk
+- **👤 User Profiles**: Display user information and manage sessions
 - **🛑 Checkout Interception**: Automatically blocks checkout/buy buttons and shows a warning to save money
 - **All Tabs Tracking**: Displays all open tabs in real-time with active tab highlighting
 - **Real-time Website Detection**: Automatically detects and tracks the current website you're on
@@ -19,15 +21,18 @@ htn-web-extension/
 ├── src/
 │   ├── background.ts    # Background service worker for tracking
 │   ├── content.ts       # Content script for website detection
-│   └── popup.ts         # Popup UI logic
+│   ├── popup.ts         # Popup UI logic
+│   └── auth.ts          # Clerk authentication logic
 ├── public/
 │   ├── manifest.json    # Extension manifest
 │   ├── popup.html       # Popup UI
+│   ├── auth.html        # Authentication page
 │   └── icons/           # Extension icons
 ├── dist/                # Built files (generated)
 ├── package.json
 ├── tsconfig.json
-└── webpack.config.js
+├── webpack.config.js
+└── CLERK_SETUP.md       # Clerk setup guide
 ```
 
 ## Setup Instructions
@@ -38,7 +43,19 @@ htn-web-extension/
 npm install
 ```
 
-### 2. Build the Extension
+### 2. Configure Clerk Authentication
+
+**Important**: You must configure Clerk before the extension will work properly.
+
+1. Follow the detailed instructions in [CLERK_SETUP.md](./CLERK_SETUP.md)
+2. Get your Clerk publishable key from https://dashboard.clerk.com
+3. Update `src/auth.ts` with your actual Clerk key:
+
+```typescript
+const CLERK_PUBLISHABLE_KEY = 'pk_test_YOUR_ACTUAL_KEY_HERE';
+```
+
+### 3. Build the Extension
 
 For development (with watch mode):
 ```bash
@@ -50,16 +67,16 @@ For production build:
 npm run build
 ```
 
-### 3. Create Extension Icons
+### 4. Create Extension Icons
 
 Create three PNG icons in the `public/icons/` directory:
-- `icon16.png` (16x16 pixels)
-- `icon48.png` (48x48 pixels)
-- `icon128.png` (128x128 pixels)
+- `logo16.png` (16x16 pixels)
+- `logo48.png` (48x48 pixels)
+- `logo128.png` (128x128 pixels)
 
 You can use any image editor or online tool to create these. For now, you can use placeholder images.
 
-### 4. Load the Extension in Chrome/Edge
+### 5. Load the Extension in Chrome/Edge
 
 1. Open your browser and navigate to:
    - **Chrome**: `chrome://extensions/`
@@ -75,8 +92,20 @@ You can use any image editor or online tool to create these. For now, you can us
 
 ## How to Use
 
+### First Time Setup
+
+1. Click the extension icon in your browser toolbar
+2. You'll see a "Sign In" button - click it to authenticate
+3. A new tab will open with the Clerk authentication page
+4. Sign in using your preferred method (email, Google, etc.)
+5. After successful authentication, you'll be redirected back to the extension
+
+### Daily Use
+
 1. Click the extension icon in your browser toolbar
 2. The popup will show:
+   - Your user profile (name, email, profile picture)
+   - Sign out button
    - Total number of open tabs
    - List of all open tabs with:
      - Website icon (based on category)
@@ -85,7 +114,7 @@ You can use any image editor or online tool to create these. For now, you can us
      - Full URL
      - Tab ID
      - Number of visits to each site
-   - Active tab is highlighted with a green border
+   - Active tab is highlighted with a white border
 
 3. The extension automatically tracks:
    - All open tabs in real-time
@@ -96,9 +125,13 @@ You can use any image editor or online tool to create these. For now, you can us
 
 4. **Checkout Protection**:
    - When you click any button with text like "Buy Now", "Checkout", "Purchase", etc.
-   - A full-screen warning appears: "Hold Up! 🛑 You need to save money, bro!"
+   - A full-screen warning appears: "You need to save money"
    - Choose to save money (cancels the action) or proceed anyway (continues to checkout)
    - Works on all websites including Amazon, eBay, and other shopping sites
+
+5. **Sign Out**:
+   - Click the "Sign Out" button in the popup to log out
+   - You'll need to sign in again to use the extension
 
 ## Development
 

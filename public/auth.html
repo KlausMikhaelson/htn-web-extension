@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Money Tracker - Sync User</title>
+  <style>
+    body {
+      width: 500px;
+      min-height: 400px;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000000;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .container {
+      background: #0a0a0a;
+      padding: 40px;
+      border-radius: 4px;
+      border: 1px solid #1a1a1a;
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 24px;
+      font-weight: 500;
+      color: #ffffff;
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #666666;
+      font-size: 14px;
+      margin-bottom: 30px;
+    }
+    
+    .loading {
+      text-align: center;
+      padding: 40px 20px;
+      color: #666666;
+      font-size: 14px;
+    }
+    
+    .spinner {
+      border: 2px solid #1a1a1a;
+      border-top: 2px solid #ffffff;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .error {
+      background: #2a0a0a;
+      border: 1px solid #4a1a1a;
+      color: #ff6b6b;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
+    }
+    
+    .success {
+      background: #0a2a0a;
+      border: 1px solid #1a4a1a;
+      color: #6bff6b;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💰 Money Tracker</h1>
+    <p class="subtitle">Syncing user data...</p>
+    
+    <div id="loading" class="loading">
+      <div class="spinner"></div>
+      <div>Checking for user data...</div>
+    </div>
+    
+    <div id="message"></div>
+  </div>
+  
+  <script src="auth.js"></script>
+</body>
+</html>

@@ -23,6 +23,22 @@ interface StoredData {
   activeTabs: TabInfo[];
 }
 
+interface UserData {
+  id: string;
+  email: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  name?: string;
+  imageUrl?: string;
+  createdAt: number;
+}
+
+// Check if user is authenticated
+async function isUserAuthenticated(): Promise<boolean> {
+  const result = await chrome.storage.local.get(['isAuthenticated']);
+  return result.isAuthenticated === true;
+}
+
 // Listen for tab activation (when user switches tabs)
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
   console.log('Tab activated:', activeInfo.tabId);
@@ -171,6 +187,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_ALL_TABS') {
     chrome.storage.local.get(['activeTabs']).then((result) => {
       sendResponse(result.activeTabs || []);
+    });
+    return true;
+  }
+  
+  if (message.type === 'CHECK_AUTH') {
+    isUserAuthenticated().then((authenticated) => {
+      sendResponse({ authenticated });
+    });
+    return true;
+  }
+  
+  if (message.type === 'GET_USER') {
+    chrome.storage.local.get(['user']).then((result) => {
+      sendResponse(result.user || null);
+    });
+    return true;
+  }
+  
+  if (message.type === 'USER_AUTHENTICATED') {
+    console.log('User authenticated:', message.user);
+    // You can add additional logic here when user authenticates
+    sendResponse({ success: true });
+    return true;
+  }
+  
+  if (message.type === 'SIGN_OUT') {
+    chrome.storage.local.remove(['user', 'isAuthenticated', 'lastSync']).then(() => {
+      console.log('User signed out');
+      sendResponse({ success: true });
     });
     return true;
   }

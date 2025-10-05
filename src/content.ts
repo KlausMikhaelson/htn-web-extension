@@ -12,6 +12,170 @@ interface WebsiteVisit {
 console.log('💰 Money Tracker content script loaded on:', window.location.hostname);
 console.log('💰 Script run at:', document.readyState);
 
+// Function to create floating pet button
+function createFloatingPet(): void {
+  // Check if pet already exists
+  if (document.getElementById('money-tracker-pet')) {
+    console.log('Pet already exists, skipping creation');
+    return;
+  }
+
+  console.log('Creating floating pet button');
+
+  // Create pet button
+  const pet = document.createElement('div');
+  pet.id = 'money-tracker-pet';
+  pet.style.cssText = `
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 60px;
+    height: 60px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 50%;
+    z-index: 999998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 28px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    transition: all 0.2s ease;
+  `;
+
+  pet.innerHTML = '💰';
+
+  // Hover effect
+  pet.addEventListener('mouseenter', () => {
+    pet.style.transform = 'scale(1.1)';
+    pet.style.background = '#111111';
+  });
+
+  pet.addEventListener('mouseleave', () => {
+    pet.style.transform = 'scale(1)';
+    pet.style.background = '#0a0a0a';
+  });
+
+  // Click to open widget
+  pet.addEventListener('click', () => {
+    console.log('Pet clicked, opening widget');
+    pet.remove();
+    createFloatingWidget();
+  });
+
+  document.body.appendChild(pet);
+  console.log('Pet button added to page');
+}
+
+// Store interval ID for widget updates
+let widgetUpdateInterval: number | null = null;
+
+// Function to create floating widget
+function createFloatingWidget(): void {
+  // Check if widget already exists
+  if (document.getElementById('money-tracker-widget')) {
+    return;
+  }
+
+  // Create widget container
+  const widget = document.createElement('div');
+  widget.id = 'money-tracker-widget';
+  widget.style.cssText = `
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 280px;
+    background: #0a0a0a;
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    padding: 16px;
+    z-index: 999998;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+  `;
+
+  // Widget content
+  widget.innerHTML = `
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+      <div style="font-size: 14px; font-weight: 500; color: #ffffff;">Money Tracker</div>
+      <button id="money-tracker-widget-close" style="
+        background: transparent;
+        border: none;
+        color: #666666;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 0;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">×</button>
+    </div>
+    <div id="money-tracker-widget-content" style="font-size: 12px; color: #888888;">
+      <div style="margin-bottom: 8px;">
+        <div style="color: #666666; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Current Site</div>
+        <div style="color: #ffffff; font-size: 13px;" id="widget-hostname">Loading...</div>
+      </div>
+      <div style="margin-bottom: 8px;">
+        <div style="color: #666666; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Open Tabs</div>
+        <div style="color: #ffffff; font-size: 13px;" id="widget-tab-count">-</div>
+      </div>
+      <div>
+        <div style="color: #666666; font-size: 10px; text-transform: uppercase; margin-bottom: 4px;">Status</div>
+        <div style="color: #ffffff; font-size: 13px;">Monitoring</div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(widget);
+
+  // Close button handler
+  const closeBtn = document.getElementById('money-tracker-widget-close');
+  closeBtn?.addEventListener('click', () => {
+    // Clear the update interval
+    if (widgetUpdateInterval !== null) {
+      clearInterval(widgetUpdateInterval);
+      widgetUpdateInterval = null;
+    }
+    
+    // Remove widget
+    widget.remove();
+    
+    // Show pet again
+    console.log('Creating pet after widget close');
+    createFloatingPet();
+  });
+
+  // Update widget content
+  updateWidgetContent();
+  
+  // Update every 2 seconds
+  widgetUpdateInterval = window.setInterval(updateWidgetContent, 2000);
+}
+
+// Function to update widget content
+async function updateWidgetContent(): Promise<void> {
+  const hostnameEl = document.getElementById('widget-hostname');
+  const tabCountEl = document.getElementById('widget-tab-count');
+
+  if (hostnameEl) {
+    hostnameEl.textContent = window.location.hostname;
+  }
+
+  try {
+    const result = await chrome.storage.local.get(['activeTabs']);
+    const activeTabs = result.activeTabs || [];
+    if (tabCountEl) {
+      tabCountEl.textContent = `${activeTabs.length} tab${activeTabs.length !== 1 ? 's' : ''}`;
+    }
+  } catch (error) {
+    console.error('Error updating widget:', error);
+  }
+}
+
 // Keywords that indicate checkout/buy buttons
 const CHECKOUT_KEYWORDS = [
   'proceed to checkout',
@@ -347,6 +511,9 @@ document.addEventListener('mousedown', (e) => {
 
 // Function to initialize the extension
 function initializeExtension() {
+  // Create floating pet button
+  createFloatingPet();
+  
   // Run interception on page load
   interceptCheckoutButtons();
 
