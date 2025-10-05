@@ -5,160 +5,229 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Money Tracker</title>
   <style>
+    /* THEME VARIABLES (sourced from shared app theme) */
+    :root {
+      --background: #0f0f23;
+      --foreground: #ffffff;
+      --card-bg: #1a1a2e;
+      --sidebar-bg: #16213e;
+      --text-secondary: #a1a1aa;
+      --border-color: #27272a;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #1d4ed8;
+      --accent-bg: #1e3a8a;
+      --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+      --accent-blue: var(--accent-primary);
+      --accent-purple: #8b5cf6;
+      --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, system-ui, sans-serif;
+    }
+
+    body.light {
+      --background: #ffffff;
+      --foreground: #1a1a1a;
+      --card-bg: #f8fafc;
+      --sidebar-bg: #f1f5f9;
+      --text-secondary: #64748b;
+      --border-color: #e2e8f0;
+    }
+
+    body.dark {
+      --background: #0f0f23;
+      --foreground: #ffffff;
+      --card-bg: #1a1a2e;
+      --sidebar-bg: #16213e;
+      --text-secondary: #a1a1aa;
+      --border-color: #27272a;
+    }
+
     body {
       width: 500px;
       max-height: 600px;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #000000;
-      color: #ffffff;
+      font-family: var(--font-sans);
+      background: var(--background);
+      color: var(--foreground);
       overflow-y: auto;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      transition: background-color .3s ease, color .3s ease;
     }
-    
+
     .container {
-      background: #0a0a0a;
-      padding: 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0) 100%);
+      padding: 20px 20px 32px;
       min-height: 100vh;
     }
-    
+
     h1 {
       margin: 0 0 20px 0;
       font-size: 18px;
-      font-weight: 500;
-      color: #ffffff;
-      letter-spacing: -0.3px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+  background: var(--accent-gradient);
+  background-clip: text; /* standard */
+  -webkit-background-clip: text; /* safari */
+  color: transparent;
     }
-    
-    .info-card {
-      background: #111111;
-      border-radius: 4px;
-      padding: 14px;
-      margin-bottom: 12px;
-      border: 1px solid #1a1a1a;
+
+    .info-card, .tab-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 14px 16px 16px;
+      margin-bottom: 14px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      transition: background-color .25s ease, border-color .25s ease, box-shadow .25s ease;
     }
-    
+
+    .info-card:before, .tab-card:before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 85% 15%, rgba(255,255,255,0.08), transparent 60%);
+      opacity: 0;
+      transition: opacity .35s ease;
+      pointer-events: none;
+    }
+
+    .tab-card:hover:before, .info-card:hover:before { opacity: 1; }
+
+    .tab-card:hover, .info-card:hover {
+      border-color: rgba(255,255,255,0.15);
+      box-shadow: 0 4px 14px -2px rgba(0,0,0,0.4);
+    }
+
+    .tab-card.active-tab {
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 0 1px var(--accent-blue), 0 6px 20px -4px rgba(0,0,0,0.55);
+    }
+
     .label {
-      font-size: 11px;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: #666666;
-      margin-bottom: 6px;
-      font-weight: 500;
+      letter-spacing: 0.55px;
+      color: var(--text-secondary);
+      margin: 0 0 6px;
+      font-weight: 600;
     }
-    
+
     .value {
       font-size: 14px;
-      font-weight: 400;
-      word-break: break-all;
-      color: #ffffff;
+      font-weight: 500;
+      word-break: break-word;
+      color: var(--foreground);
+      line-height: 1.4;
     }
-    
+
     .status {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 3px;
-      background: #1a1a1a;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px 3px 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.05);
       font-size: 10px;
       margin-top: 6px;
-      color: #888888;
-      border: 1px solid #222222;
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(6px);
     }
-    
+
     .status.active {
-      background: #ffffff;
-      color: #000000;
-      border-color: #ffffff;
+      background: var(--accent-gradient);
+      color: #fff;
+      border-color: var(--accent-secondary);
+      box-shadow: 0 2px 8px -2px rgba(0,0,0,0.5);
     }
-    
+
     .loading {
       text-align: center;
-      padding: 20px;
-      color: #666666;
+      padding: 28px 12px;
+      color: var(--text-secondary);
       font-size: 13px;
+      letter-spacing: 0.3px;
     }
-    
-    /* Tab card styles */
-    .tab-card {
-      background: #111111;
-      border-radius: 4px;
-      padding: 12px;
-      margin-bottom: 8px;
-      border: 1px solid #1a1a1a;
-      transition: all 0.15s ease;
-    }
-    
-    .tab-card:hover {
-      background: #151515;
-      border-color: #222222;
-    }
-    
-    .tab-card.active-tab {
-      border-color: #ffffff;
-      background: #0f0f0f;
-    }
-    
+
     .tab-header {
       display: flex;
       align-items: center;
       gap: 8px;
       margin-bottom: 8px;
     }
-    
-    .tab-icon {
-      font-size: 16px;
-    }
-    
+
+    .tab-icon { font-size: 16px; }
+
     .tab-hostname {
-      font-weight: 500;
+      font-weight: 600;
       font-size: 13px;
       flex: 1;
-      color: #ffffff;
+      color: var(--foreground);
     }
-    
+
     .active-badge {
-      background: #ffffff;
-      color: #000000;
-      padding: 2px 6px;
-      border-radius: 2px;
+      background: var(--accent-gradient);
+      color: #fff;
+      padding: 3px 7px;
+      border-radius: 4px;
       font-size: 9px;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.6px;
       font-weight: 600;
+      box-shadow: 0 2px 6px -1px rgba(0,0,0,0.5);
     }
-    
+
     .tab-title {
       font-size: 12px;
-      color: #888888;
+      color: var(--text-secondary);
       margin-bottom: 6px;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
     }
-    
+
     .tab-url {
       font-size: 10px;
-      color: #555555;
+      color: rgba(255,255,255,0.45);
       word-break: break-all;
       margin-bottom: 8px;
       max-height: 32px;
       overflow: hidden;
       text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* webkit */
+  line-clamp: 2; /* future standard */
+  -webkit-box-orient: vertical;
     }
-    
+
     .tab-stats {
-      font-size: 9px;
-      color: #444444;
+      font-size: 10px;
+      color: rgba(255,255,255,0.4);
       display: flex;
-      gap: 6px;
+      gap: 8px;
       align-items: center;
+      flex-wrap: wrap;
     }
+
+    /* Scrollbar matching theme */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--sidebar-bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent-blue); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-purple); }
+
+    /* Utility gradient + animations (subset for popup) */
+    @keyframes gradientShift { 0%{background-position:0 50%} 50%{background-position:100% 50%} 100%{background-position:0 50%} }
+    .gradient-accent { background: var(--accent-gradient); background-size:200% 200%; animation: gradientShift 4s ease infinite; }
+
+    @keyframes fadeInUp { from { opacity:0; transform: translateY(8px);} to { opacity:1; transform: translateY(0);} }
+    .fade-in { animation: fadeInUp .5s cubic-bezier(.4,0,.2,1); }
+
+    /* Subtle global transitions */
+    * { transition: background-color .25s ease, color .25s ease, border-color .25s ease, box-shadow .25s ease; }
   </style>
 </head>
-<body>
+<body class="dark">
   <div class="container">
     <h1>💰 Money Tracker</h1>
     <div id="content">
