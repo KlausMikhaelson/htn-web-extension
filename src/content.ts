@@ -363,7 +363,7 @@ function createFloatingPet(): void {
     transition: all 0.2s ease;
   `;
 
-  pet.innerHTML = '💰';
+  pet.innerHTML = '<img src="' + chrome.runtime.getURL('icons/mascot.png') + '" style="width: 40px; height: 40px; object-fit: contain;" />';
 
   // Hover effect
   pet.addEventListener('mouseenter', () => {
@@ -495,6 +495,112 @@ async function updateWidgetContent(): Promise<void> {
   }
 }
 
+// Function to show success notification when user saves money
+function showSuccessNotification(result: any, amount: number): void {
+  const notification = document.createElement('div');
+  notification.id = 'money-tracker-success';
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border-left: 4px solid #10b981;
+    max-width: 400px;
+    z-index: 1000000;
+    animation: slideInRight 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  `;
+
+  let goalsHTML = '';
+  if (result.goals_updated && result.goals_updated.length > 0) {
+    goalsHTML = result.goals_updated.map((goal: any) => `
+      <div style="margin-bottom: 8px; padding: 8px; background: #f3f4f6; border-radius: 4px;">
+        <div style="font-weight: 500; color: #111827; margin-bottom: 4px;">${goal.name}</div>
+        <div style="font-size: 12px; color: #6b7280;">
+          $${goal.new_amount.toFixed(2)} / $${goal.target_amount.toFixed(2)} (${goal.progress_percentage}%)
+        </div>
+        <div style="font-size: 11px; color: #10b981; margin-top: 2px;">
+          +$${goal.amount_added.toFixed(2)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  notification.innerHTML = `
+    <div style="display: flex; gap: 16px; align-items: flex-start;">
+      <div style="font-size: 32px;">✅</div>
+      <div style="flex: 1;">
+        <h3 style="margin: 0 0 8px 0; color: #10b981; font-size: 18px; font-weight: 600;">
+          Money Saved!
+        </h3>
+        <p style="margin: 0 0 12px 0; color: #374151; font-size: 14px; line-height: 1.6;">
+          Great decision! You saved <strong>$${amount.toFixed(2)}</strong> and added it to ${result.goals_updated?.length || 0} goal(s)!
+        </p>
+        ${goalsHTML}
+        <p style="margin: 12px 0 0 0; color: #6b7280; font-size: 12px; font-style: italic;">
+          Redirecting to dashboard in 2 seconds...
+        </p>
+      </div>
+      <button id="money-tracker-close-notification" style="
+        background: transparent;
+        border: none;
+        color: #9ca3af;
+        cursor: pointer;
+        font-size: 20px;
+        padding: 0;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">×</button>
+    </div>
+  `;
+
+  // Add CSS for animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes slideInRight {
+      from {
+        transform: translateX(400px);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: translateX(400px);
+      }
+    }
+    .fade-out {
+      animation: fadeOut 0.3s ease forwards;
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.body.appendChild(notification);
+
+  // Close button handler
+  const closeBtn = document.getElementById('money-tracker-close-notification');
+  closeBtn?.addEventListener('click', () => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 300);
+  });
+
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    notification.classList.add('fade-out');
+    setTimeout(() => notification.remove(), 300);
+  }, 5000);
+}
+
 // Function to create and show warning overlay
 async function showWarningOverlay(buttonElement: HTMLElement): Promise<void> {
   // Check if overlay already exists
@@ -502,24 +608,46 @@ async function showWarningOverlay(buttonElement: HTMLElement): Promise<void> {
     return;
   }
 
-  // Get product info to check spending
+  // Get product info and user goals
   const storage = await chrome.storage.local.get(['lastViewedProduct']);
   const productInfo = storage.lastViewedProduct;
   
-  let spendingCheck: any = null;
-  let isOverspending = false;
+  let roastMessage = 'You need to save money. Don\'t buy this right now.';
+  let userGoals: any[] = [];
   
-  // Check spending if we have product info
-  if (productInfo && productInfo.item_name && productInfo.price > 0) {
+  // Get user goals
+  try {
+    const goalsResponse = await chrome.runtime.sendMessage({ type: 'GET_GOALS' });
+    if (goalsResponse && goalsResponse.goals) {
+      userGoals = goalsResponse.goals;
+      console.log('🎯 User goals:', userGoals);
+    }
+  } catch (error) {
+    console.error('Failed to get goals:', error);
+  }
+  
+  // Get roast message if we have product info and goals
+  if (productInfo && productInfo.item_name && productInfo.price > 0 && userGoals.length > 0) {
     try {
-      // Import checkSpending dynamically
-      const { checkSpending } = await import(chrome.runtime.getURL('api.js'));
-      spendingCheck = await checkSpending(productInfo.item_name, productInfo.price);
-      isOverspending = spendingCheck.is_overspending;
-      console.log('💰 Spending check:', spendingCheck);
+      const roastResponse = await chrome.runtime.sendMessage({
+        type: 'GET_ROAST',
+        data: {
+          items: productInfo.item_name,
+          amount: productInfo.price,
+          goals: userGoals.map(g => ({
+            name: g.name,
+            target_amount: g.target_amount,
+            current_amount: g.current_amount
+          }))
+        }
+      });
+      if (roastResponse && roastResponse.result) {
+        roastMessage = roastResponse.result;
+        console.log('🔥 Roast message:', roastMessage);
+      }
     } catch (error) {
-      console.error('Failed to check spending:', error);
-      // Continue without spending check
+      console.error('Failed to get roast:', error);
+      // Continue with default message
     }
   }
 
@@ -548,83 +676,56 @@ async function showWarningOverlay(buttonElement: HTMLElement): Promise<void> {
     border-radius: 4px;
     max-width: 600px;
     text-align: center;
-    border: 1px solid ${isOverspending ? '#4a1a1a' : '#1a1a1a'};
-    animation: ${isOverspending ? 'shake 0.5s ease, slideIn 0.3s ease' : 'slideIn 0.3s ease'};
+    border: 1px solid #4a1a1a;
+    animation: shake 0.5s ease, slideIn 0.3s ease;
   `;
 
-  // Build content HTML
-  let contentHTML = '';
-  
-  if (isOverspending && spendingCheck) {
-    // Show roast message
-    contentHTML = `
-      <div style="font-size: 48px; margin-bottom: 16px;">🔥</div>
-      <h1 style="color: #ff6b6b; font-size: 28px; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; letter-spacing: -0.5px;">
-        Whoa there, big spender!
-      </h1>
-      
-      <div style="background: #2a0a0a; border: 1px solid #4a1a1a; border-radius: 4px; padding: 16px; margin-bottom: 24px;">
-        <p style="color: #ff6b6b; font-size: 14px; margin: 0; line-height: 1.6; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
-          ${spendingCheck.roast_message || "You're about to overspend!"}
-        </p>
-      </div>
-      
+  // Build content HTML with roast message
+  const contentHTML = `
+    <div style="margin-bottom: 16px;"><img src="${chrome.runtime.getURL('icons/mascot.png')}" style="width: 80px; height: 80px; object-fit: contain;" /></div>
+    <h1 style="color: #ff6b6b; font-size: 28px; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; letter-spacing: -0.5px;">
+      Hold up!
+    </h1>
+    
+    <div style="background: #2a0a0a; border: 1px solid #4a1a1a; border-radius: 4px; padding: 20px; margin-bottom: 24px;">
+      <p style="color: #ff6b6b; font-size: 15px; margin: 0; line-height: 1.7; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; white-space: pre-wrap;">
+        ${roastMessage}
+      </p>
+    </div>
+    
+    ${productInfo && productInfo.price > 0 ? `
       <div style="background: #1a1a1a; border-radius: 4px; padding: 16px; margin-bottom: 24px; text-align: left;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #888888; font-size: 13px;">Spent today:</span>
-          <span style="color: #ffffff; font-size: 13px; font-weight: 500;">$${spendingCheck.spent_today.toFixed(2)}</span>
+          <span style="color: #888888; font-size: 13px;">Item:</span>
+          <span style="color: #ffffff; font-size: 13px; font-weight: 500;">${productInfo.item_name?.substring(0, 40) || 'Unknown'}${productInfo.item_name?.length > 40 ? '...' : ''}</span>
         </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #888888; font-size: 13px;">This purchase:</span>
-          <span style="color: #ffffff; font-size: 13px; font-weight: 500;">$${productInfo.price.toFixed(2)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-          <span style="color: #888888; font-size: 13px;">New total:</span>
-          <span style="color: #ff6b6b; font-size: 13px; font-weight: 500;">$${spendingCheck.new_total.toFixed(2)}</span>
-        </div>
-        <div style="height: 1px; background: #333333; margin: 12px 0;"></div>
         <div style="display: flex; justify-content: space-between;">
-          <span style="color: #888888; font-size: 13px;">Daily limit:</span>
-          <span style="color: #888888; font-size: 13px;">$${spendingCheck.daily_limit.toFixed(2)}</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-          <span style="color: #ff6b6b; font-size: 13px; font-weight: 500;">Over budget:</span>
-          <span style="color: #ff6b6b; font-size: 13px; font-weight: 500;">$${(spendingCheck.overspend_amount || 0).toFixed(2)}</span>
+          <span style="color: #888888; font-size: 13px;">Price:</span>
+          <span style="color: #ff6b6b; font-size: 13px; font-weight: 500;">$${productInfo.price.toFixed(2)}</span>
         </div>
       </div>
-    `;
-  } else {
-    // Show regular warning
-    contentHTML = `
-      <h1 style="color: #ffffff; font-size: 28px; margin: 0 0 16px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 500; letter-spacing: -0.5px;">
-        You need to save money
-      </h1>
-      <p style="color: #888888; font-size: 16px; margin: 0 0 40px 0; line-height: 1.5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-weight: 400;">
-        Don't buy this right now
-      </p>
-    `;
-  }
+    ` : ''}
   
-  contentHTML += `
-    <div style="display: flex; gap: 12px; justify-content: center;">
-      <button id="money-tracker-cancel" style="
-        background: #ffffff;
-        color: #000000;
+    <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+      <button id="money-tracker-save" style="
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #ffffff;
         border: none;
         padding: 12px 24px;
         font-size: 14px;
         border-radius: 4px;
         cursor: pointer;
-        font-weight: 500;
-        transition: all 0.15s;
+        font-weight: 600;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
-        I'll Save
+        💰 I'll Save!
       </button>
       <button id="money-tracker-proceed" style="
         background: transparent;
-        color: ${isOverspending ? '#ff6b6b' : '#666666'};
-        border: 1px solid ${isOverspending ? '#4a1a1a' : '#333333'};
+        color: #ff6b6b;
+        border: 1px solid #4a1a1a;
         padding: 12px 24px;
         font-size: 14px;
         border-radius: 4px;
@@ -633,7 +734,7 @@ async function showWarningOverlay(buttonElement: HTMLElement): Promise<void> {
         transition: all 0.15s;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       ">
-        ${isOverspending ? 'Buy Anyway' : 'Proceed Anyway'}
+        Buy Anyway
       </button>
     </div>
   `;
@@ -659,6 +760,11 @@ async function showWarningOverlay(buttonElement: HTMLElement): Promise<void> {
       10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
       20%, 40%, 60%, 80% { transform: translateX(10px); }
     }
+    #money-tracker-save:hover {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4) !important;
+    }
     #money-tracker-cancel:hover {
       background: #e6e6e6 !important;
     }
@@ -671,12 +777,52 @@ async function showWarningOverlay(buttonElement: HTMLElement): Promise<void> {
   document.head.appendChild(style);
 
   // Handle button clicks
-  const cancelBtn = document.getElementById('money-tracker-cancel');
+  const saveBtn = document.getElementById('money-tracker-save');
   const proceedBtn = document.getElementById('money-tracker-proceed');
 
-  cancelBtn?.addEventListener('click', () => {
-    overlay.remove();
-    console.log('💰 User chose to save money!');
+  // "I'll Save!" button - adds money to savings goals
+  saveBtn?.addEventListener('click', async () => {
+    console.log('💰 User chose to save and add to goals!');
+    
+    if (productInfo && productInfo.price > 0) {
+      try {
+        // Ask background script to add savings with product details
+        const result = await chrome.runtime.sendMessage({
+          type: 'ADD_SAVINGS',
+          data: {
+            amount: productInfo.price,
+            distribution: 'equal',
+            productDetails: {
+              item_name: productInfo.item_name,
+              website: productInfo.website || window.location.hostname,
+              url: productInfo.url || window.location.href,
+              description: productInfo.description
+            }
+          }
+        });
+        
+        console.log('✅ Savings added:', result);
+        
+        // Remove overlay first
+        overlay.remove();
+        
+        // Show success notification
+        showSuccessNotification(result, productInfo.price);
+        
+        // Redirect to dashboard after 2 seconds
+        setTimeout(() => {
+          console.log('🔄 Redirecting to dashboard...');
+          window.location.href = 'http://localhost:3000/dashboard';
+        }, 2000);
+      } catch (error) {
+        console.error('Failed to add savings:', error);
+        overlay.remove();
+        alert('Failed to save money to goals. Please try again.');
+      }
+    } else {
+      overlay.remove();
+      alert('No product information available to save.');
+    }
   });
 
   proceedBtn?.addEventListener('click', async () => {

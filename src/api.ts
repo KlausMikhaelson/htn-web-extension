@@ -246,6 +246,158 @@ export async function initializeGoals(): Promise<void> {
 }
 
 /**
+ * Add saved money to savings goals
+ */
+export async function addSavings(
+  amount: number,
+  distribution: 'equal' | 'proportional' | 'priority' = 'equal',
+  productDetails?: {
+    item_name?: string;
+    website?: string;
+    url?: string;
+    description?: string;
+  }
+): Promise<{
+  success: boolean;
+  message: string;
+  distribution_method: string;
+  total_amount: number;
+  saved_purchase_id?: string;
+  goals_updated: Array<{
+    id: string;
+    name: string;
+    previous_amount: number;
+    new_amount: number;
+    amount_added: number;
+    target_amount: number;
+    progress_percentage: string;
+  }>;
+}> {
+  try {
+    const userId = await getUserId();
+    
+    if (!userId) {
+      throw new Error('User not authenticated - user ID not found');
+    }
+
+    const payload: any = {
+      user_id: userId,
+      amount: amount,
+      distribution: distribution
+    };
+
+    // Add product details if provided
+    if (productDetails) {
+      if (productDetails.item_name) payload.item_name = productDetails.item_name;
+      if (productDetails.website) payload.website = productDetails.website;
+      if (productDetails.url) payload.url = productDetails.url;
+      if (productDetails.description) payload.description = productDetails.description;
+    }
+
+    const response = await fetch(`${API_BASE_URL}/goals/add-savings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to add savings');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error adding savings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get user's savings goals
+ */
+export async function getGoals(): Promise<{
+  success: boolean;
+  goals: Array<{
+    id: string;
+    name: string;
+    target_amount: number;
+    current_amount: number;
+    description?: string;
+    deadline?: string;
+    created_at: string;
+  }>;
+}> {
+  try {
+    const userId = await getUserId();
+    
+    if (!userId) {
+      throw new Error('User not authenticated - user ID not found');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/goals/list?user_id=${userId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get goals');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error getting goals:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get roast message for a purchase
+ */
+export async function getRoast(
+  items: string,
+  amount: number,
+  goals: Array<{ name: string; target_amount: number; current_amount: number }>
+): Promise<{
+  result: string;
+}> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/roast`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': API_KEY,
+      },
+      body: JSON.stringify({
+        // for testing purpose we are adding this for airpods!
+        items: "Apple AirPods Pro 2 Wireless Earbuds, Bluetooth Headphones",
+        amount,
+        goals
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to get roast');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error getting roast:', error);
+    throw error;
+  }
+}
+
+/**
  * Test API connection
  */
 export async function testApiConnection(): Promise<boolean> {

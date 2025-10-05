@@ -313,6 +313,83 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
+  
+  if (message.type === 'CHECK_SPENDING') {
+    console.log('💰 Checking spending for:', message.data);
+    
+    // Import and call checkSpending
+    import('./api').then(async (api) => {
+      try {
+        const result = await api.checkSpending(message.data.item_name, message.data.price);
+        sendResponse(result);
+      } catch (error) {
+        console.error('Failed to check spending:', error);
+        sendResponse({ is_overspending: false, error: String(error) });
+      }
+    });
+    
+    return true; // Keep channel open for async response
+  }
+  
+  if (message.type === 'ADD_SAVINGS') {
+    console.log('💰 Adding savings:', message.data);
+    
+    // Import and call addSavings
+    import('./api').then(async (api) => {
+      try {
+        const productDetails = message.data.productDetails || {};
+        const result = await api.addSavings(
+          message.data.amount,
+          message.data.distribution,
+          productDetails
+        );
+        sendResponse(result);
+      } catch (error) {
+        console.error('Failed to add savings:', error);
+        sendResponse({ success: false, error: String(error) });
+      }
+    });
+    
+    return true; // Keep channel open for async response
+  }
+  
+  if (message.type === 'GET_ROAST') {
+    console.log('🔥 Getting roast:', message.data);
+    
+    // Import and call getRoast
+    import('./api').then(async (api) => {
+      try {
+        const result = await api.getRoast(
+          message.data.items,
+          message.data.amount,
+          message.data.goals
+        );
+        sendResponse(result);
+      } catch (error) {
+        console.error('Failed to get roast:', error);
+        sendResponse({ result: 'Unable to load roast message. Please try again.' });
+      }
+    });
+    
+    return true; // Keep channel open for async response
+  }
+  
+  if (message.type === 'GET_GOALS') {
+    console.log('🎯 Getting goals');
+    
+    // Import and call getGoals
+    import('./api').then(async (api) => {
+      try {
+        const result = await api.getGoals();
+        sendResponse(result);
+      } catch (error) {
+        console.error('Failed to get goals:', error);
+        sendResponse({ success: false, goals: [] });
+      }
+    });
+    
+    return true; // Keep channel open for async response
+  }
 });
 
 // Initialize on extension install/update
